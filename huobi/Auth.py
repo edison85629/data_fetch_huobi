@@ -12,7 +12,7 @@ from urllib import parse
 class Auth:
 
     def __init__(self, auth_name: str=None):
-        __iniFilePath = glob.glob("authcfg.ini")
+        __iniFilePath = glob.glob("../config/authcfg.ini")
         cfg = configparser.ConfigParser()
         cfg.read(__iniFilePath, encoding='utf-8')
         self.accessKey = cfg.get(auth_name, 'accessKey')

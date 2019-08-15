@@ -12,7 +12,7 @@ class SqlConnection:
         self.symbol = symbol
         self.period = period
         # 从配置文件中获取初始化参数
-        __iniFilePath = glob.glob("mysql_params.ini")
+        __iniFilePath = glob.glob("../config/mysql_params.ini")
         cfg = configparser.ConfigParser()
         cfg.read(__iniFilePath, encoding='utf-8')
         self.host = cfg.get('mysql', 'host')
@@ -204,4 +204,9 @@ class SqlConnection:
             pass
 
         return effect_row
+
+    def print_config(self):
+        print(self.table_name)
+        print(self.password)
+
 
