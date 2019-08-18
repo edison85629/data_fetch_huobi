@@ -67,10 +67,9 @@ class SqlConnection:
                 print("table_name is wrong")
                 raise RuntimeError
             table_name = self.table_name
-
         if not self.check_table_exist(table_name=table_name):
             self.create_tables(table_name=table_name)
-        result = self.update_kline(table_name=table_name,values=values)
+        result = self.update_kline(table_name=table_name, values=values)
         if not result:
             result = self.insert_kline(table_name=table_name, values=values)
         return result
@@ -99,6 +98,17 @@ class SqlConnection:
         except pymysql.Warning as w:
             print(str(w))
         return result_s
+
+    def get_record(self, timestamp: int):
+        if timestamp:
+            self.cursor.execute('''
+                select * from %s where timestamp = %d
+            ''' % (self.table_name, timestamp))
+            result = self.cursor.fetchall()
+            if result:
+                return result
+            else:
+                return None
 
     def get_records(self,
                     start_time: int=0,
@@ -136,12 +146,17 @@ class SqlConnection:
         return DataFrame(records)
 
     def save_req_records(self, data):
-        if data:
-            keys = list(data.keys())
-            list.sort(keys, reverse=True)
-            for i in keys:
-                for j in data[i]:
-                    self.records_insert(values=j)
+        try:
+            if data:
+                keys = list(data.keys())
+                list.sort(keys, reverse=True)
+                for i in keys:
+                    for j in data[i]:
+                        self.records_insert(values=j)
+        except:
+            return "some bad thing happened"
+        else:
+            return "save successful"
 
     def update_records(self, table_name: str=None, values: dict={}):
         if table_name is None:

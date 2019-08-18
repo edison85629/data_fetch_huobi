@@ -1,5 +1,7 @@
 import websocket
 import time
+import logging.config
+import yaml
 from huobi.sql_connection import SqlConnection
 from huobi.MessageFormat import Message
 
@@ -46,10 +48,16 @@ class FetchClient:
         self.fetch_count = 0
         self.records_index = 0
 
+        with open(r'../config/log_config.yaml') as f:
+            log_config = yaml.safe_load(f)
+            logging.config.dictConfig(log_config)
+        self.logger = logging.getLogger('%s' % (self.symbol + '_'+str(self.period)+"min"))
+
+
     # 接收消息
     def on_message(self, ws, message):
         self.req_ws = ws
-        msg = Message()
+        msg = Message(logger = self.logger)
         # 初始化传入的sub 获取 req函数
         if self.func == 'req':
             if self.fetch_count < len(self.records_indexes):
@@ -66,14 +74,17 @@ class FetchClient:
                     data = msg.get_req_msg()
 
                     if data:
+                        self.logger.info(data)  # logger测试
                         if data[0] == self.fetch_count:
                             self.fetch_count += 1
                             self.req_count = 0
                         self.totaldata[data[0]] = data[1]
                         self.records_index = data[0]
             if self.records_index == len(self.records_indexes)-1:
-                self.sql_client.save_req_records(data=self.get_data())
-                self.totaldata={}
+                if self.totaldata:
+                    save_msg = self.sql_client.save_req_records(data=self.get_data())
+                    self.logger.info("save message"+":"+save_msg)
+                    self.totaldata = None
                 sub = "market.%s.kline.%s" % (self.symbol, str(self.period) + 'min')
                 if sub not in self.sub_dict.keys():
                     sub_id = str(len(self.sub_dict))
@@ -83,6 +94,7 @@ class FetchClient:
                 else:
                     msg.sub_padding(ws, message, data='', totalcount=1)
                 values = msg.get_sub_msg()
+                logging.info(values)
                 if values:
                     self.sql_client.update_records(values=values)
         elif self.func == 'sub':
@@ -92,16 +104,19 @@ class FetchClient:
     # 发生错误
     def on_error(self, ws, error):
         # TODO 填写因发送异常，连接断开的处理操作
-        print(ws.on_error.__dict__)
+        self.logger.error(ws.on_error.__dict__)
+        # print(ws.on_error.__dict__)
 
     # 连接断开
     def on_close(self, ws):
         # TODO 填写连接断开的处理操作
-        print("### closed ###")
+        self.logger.info("### closed ###")
+        # print("### closed ###")
 
     # 建立连接
     def on_open(self, ws):
-        print("success")
+        self.logger.info('Connection Successful')
+        # print("success")
 
     def start_fetch(self, func: str='req'):
         # 调用的函数

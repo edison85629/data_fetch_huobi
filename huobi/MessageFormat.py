@@ -4,19 +4,22 @@ import time
 
 
 class Message:
-    def __init__(self):
+    def __init__(self, logger):
         self.req_msg = {}
         self.sub_msg = None
+        self.logger = logger
 
     # 发送sub请求
     def sub_padding(self, ws, message, data=None, totalcount=None):
         # 接收服务器的数据  进行解压操作
         ws_result = str(zlib.decompressobj(31).decompress(message), encoding="utf-8")
         # TODO 自定义打印服务器传回的信息
-        print('接收服务器数据为 ：%s' % ws_result)
+        # print('接收服务器数据为 ：%s' % ws_result)
+        self.logger.info('接收服务器数据为 ：%s' % ws_result)
 
         if totalcount < 1:
-            print('向服务器发送订阅 :%s' % data)
+            # print('向服务器发送订阅 :%s' % data)
+            self.logger.info('向服务器发送订阅 :%s' % data)
             ws.send(data)
 
         # 维持ping pong
@@ -24,8 +27,8 @@ class Message:
             ping_id = json.loads(ws_result).get('ping')
             pong_data = '{"pong": %d}' % ping_id
             ws.send(pong_data)
-            print('向服务器发送pong :%s' % pong_data)
-
+            # print('向服务器发送pong :%s' % pong_data)
+            self.logger.info('向服务器发送pong :%s' % pong_data)
         if 'tick' in ws_result:
             data = json.loads(ws_result).get('tick')
             self.sub_msg = data
@@ -35,7 +38,7 @@ class Message:
         # 接收服务器的数据  进行解压操作
         ws_result = str(zlib.decompressobj(31).decompress(message), encoding="utf-8")
         # TODO 自定义打印服务器传回的信息
-        print('服务器响应数据:%s' % ws_result)
+        # print('服务器响应数据:%s' % ws_result)
         if totalcount < 1:
             print('向服务器发送数据:%s' % data)
             ws.send(data)
@@ -45,8 +48,10 @@ class Message:
         if 'ping' in ws_result:
             pong_data = '{"pong": %d}' % ping_id
             ws.send(pong_data)
-            print('向服务器发送pong :%s' % pong_data)
+            # print('向服务器发送pong :%s' % pong_data)
+            self.logger.info('向服务器发送pong :%s' % pong_data)
         if 'id' in ws_result and 'status' in ws_result:
+            self.logger.info('服务器响应数据:%s' % ws_result)
             index = result_js.get('id')
             data = result_js.get('data')
             if data:
