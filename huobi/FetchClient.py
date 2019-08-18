@@ -17,7 +17,11 @@ class FetchClient:
                  size: int=240
                  ):
 
-        self.sql_client = SqlConnection(symbol=symbol, period=period)
+        with open(r'../config/log_config.yaml') as f:
+            log_config = yaml.safe_load(f)
+            logging.config.dictConfig(log_config)
+        self.logger = logging.getLogger('%s' % (self.symbol + '_'+str(self.period)+"min"))
+        self.sql_client = SqlConnection(symbol=symbol, period=period, logger=self.logger)
         self.sql_client.create_tables()
         records_time = self.sql_client.get_time_range()
         records_begin = records_time.begin
@@ -52,10 +56,6 @@ class FetchClient:
         self.fetch_count = 0
         self.records_index = 0
 
-        with open(r'../config/log_config.yaml') as f:
-            log_config = yaml.safe_load(f)
-            logging.config.dictConfig(log_config)
-        self.logger = logging.getLogger('%s' % (self.symbol + '_'+str(self.period)+"min"))
 
 
     # 接收消息

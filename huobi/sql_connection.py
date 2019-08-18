@@ -3,11 +3,12 @@ import glob
 import configparser
 import time
 import warnings
+import logging
 from pandas import Series, DataFrame
 
 
 class SqlConnection:
-    def __init__(self, symbol: str='btcusdt', period: int=60):
+    def __init__(self, symbol: str='btcusdt', period: int=60, logger=logging):
         warnings.filterwarnings('error', category=pymysql.Warning)
         self.symbol = symbol
         self.period = period
@@ -23,6 +24,7 @@ class SqlConnection:
         self.table_name = symbol+'_'+str(period)+'min'
         self.con = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password, database=self.db)
         self.cursor = self.con.cursor()
+        self.logger = logger
 
     def close_connect(self):
         self.con.close()
