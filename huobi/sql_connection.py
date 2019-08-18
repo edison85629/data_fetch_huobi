@@ -240,13 +240,13 @@ class SqlConnection:
             return False
         return True
 
-    def delete_final_records(self, size=10, table_name=None):
+    def delete_final_records(self, size=100, table_name=None):
         if table_name is None:
             table_name = self.table_name
         try:
             effect_rows = self.cursor.execute('''
-              delete from %s order by id desc limit %d;
-            ''' % (table_name, size, size))
+              delete from %s order by timestamp desc limit %d;
+            ''' % (table_name, size))
             self.con.commit()
         except pymysql.Warning as w:
             self.logger.error(w)
