@@ -17,12 +17,15 @@ class FetchClient:
                  size: int=240
                  ):
 
+        self.symbol = symbol
+        self.period = period
         with open(r'../config/log_config.yaml') as f:
             log_config = yaml.safe_load(f)
             logging.config.dictConfig(log_config)
         self.logger = logging.getLogger('%s' % (self.symbol + '_'+str(self.period)+"min"))
         self.sql_client = SqlConnection(symbol=symbol, period=period, logger=self.logger)
         self.sql_client.create_tables()
+        self.sql_client.delete_final_records()
         records_time = self.sql_client.get_time_range()
         records_begin = records_time.begin
         records_end = records_time.end
@@ -37,8 +40,6 @@ class FetchClient:
         self.to_time = int(time.time())
         self.req_ws = None
         self.func = None
-        self.symbol = symbol
-        self.period = period
         self.instance_id = instance_id
         self.time_unit = 1*60*self.period*size
         self.req_count = 0
@@ -126,9 +127,9 @@ class FetchClient:
         self.func = func
         websocket.enableTrace(True)
         ws1 = websocket.WebSocketApp(self.url,
-                                    on_message=self.on_message,
-                                    on_error=self.on_error,
-                                    on_close=self.on_close)
+                                     on_message=self.on_message,
+                                     on_error=self.on_error,
+                                     on_close=self.on_close)
         ws1.on_open = self.on_open
         ws1.run_forever()
 

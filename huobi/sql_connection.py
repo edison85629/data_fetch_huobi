@@ -60,6 +60,7 @@ class SqlConnection:
         except pymysql.Warning as w:
             sql_warning = 'Warning: %s' % str(w)
             self.logger.error(sql_warning)
+            effect_row = 0
         else:
             pass
         return effect_row
@@ -72,7 +73,7 @@ class SqlConnection:
             table_name = self.table_name
         if not self.check_table_exist(table_name=table_name):
             self.create_tables(table_name=table_name)
-        is_exist = self.record_exist(timestamp=values['timestamp'])
+        is_exist = self.record_exist(timestamp=values['id'])
         if is_exist:
             effect_rows = self.update_kline(table_name=table_name, values=values)
         else:
@@ -171,7 +172,7 @@ class SqlConnection:
         if not values:
             return
         try:
-            is_exist = self.record_exist(values['timestamp'])
+            is_exist = self.record_exist(values['id'])
             if is_exist:
                 effect_row = self.update_kline(table_name=table_name, values=values)
             else:
@@ -239,9 +240,19 @@ class SqlConnection:
             return False
         return True
 
-# client = SqlConnection()
-# cursor = client.get_cursor()
-# result = client.get_time_range()
-# isexist = client.record_exist(timestamp=1566136801)
-# print(isexist)
+    def delete_final_records(self, size=10, table_name=None):
+        if table_name is None:
+            table_name = self.table_name
+        try:
+            effect_rows = self.cursor.execute('''
+              delete from %s order by id desc limit %d;
+            ''' % (table_name, size, size))
+            self.con.commit()
+        except pymysql.Warning as w:
+            self.logger.error(w)
+            self.con.rollback()
+            return 0
+        else:
+            return effect_rows
+
 
