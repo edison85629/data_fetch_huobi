@@ -59,9 +59,10 @@ class SqlConnection:
             sql_warning = 'Warning: %s' % str(w)
             self.logger.error(sql_warning)
         else:
-            print("create table %s, success" % table_name)
+            pass
+        return effect_row
 
-    def records_insert(self,table_name:str=None, values={}):
+    def records_insert(self, table_name: str=None, values: dict={}):
         if table_name is None:
             if self.table_name == '':
                 print("table_name is wrong")
@@ -88,7 +89,6 @@ class SqlConnection:
     def get_time_range(self, table_name: str=None):
         if table_name is None:
             table_name = self.table_name
-        # if self.check_table_exist():
         if self.check_table_exist() is None:
             self.create_tables()
         try:
@@ -96,7 +96,7 @@ class SqlConnection:
               select MAX(timestamp),MIN(timestamp) FROM %s;
             ''' % table_name)
             result = self.cursor.fetchone()
-            result_s = Series({'begin':result[1], 'end': result[0]})
+            result_s = Series({'begin': result[1], 'end': result[0]})
         except pymysql.Warning as w:
             print(str(w))
         return result_s
@@ -129,7 +129,7 @@ class SqlConnection:
 
         table_name = symbol+'_'+str(period)+'min'
         if start_time is 0:
-            start_time = self.show_time_range(table_name=table_name)[1]
+            start_time = self.get_time_range(table_name=table_name)[1]
         effect_row = self.cursor.execute('''
             select * from %s WHERE TIMESTAMP BETWEEN %s AND %s
         ''' % (table_name, start_time, to_time))
