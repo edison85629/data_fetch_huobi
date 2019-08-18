@@ -56,8 +56,8 @@ class SqlConnection:
               )ENGINE=InnoDB DEFAULT CHARSET=utf8
             ''' % table_name)
         except pymysql.Warning as w:
-            sqlWarning = 'Warning: %s' % str(w)
-            print(sqlWarning)
+            sql_warning = 'Warning: %s' % str(w)
+            self.logger.error(sql_warning)
         else:
             print("create table %s, success" % table_name)
 
@@ -69,10 +69,12 @@ class SqlConnection:
             table_name = self.table_name
         if not self.check_table_exist(table_name=table_name):
             self.create_tables(table_name=table_name)
-        result = self.update_kline(table_name=table_name, values=values)
-        if not result:
-            result = self.insert_kline(table_name=table_name, values=values)
-        return result
+        is_exist = self.record_exist(timestamp=values['timestamp'])
+        if is_exist:
+            effect_rows = self.update_kline(table_name=table_name, values=values)
+        else:
+            effect_rows = self.insert_kline(table_name=table_name, values=values)
+        return effect_rows
 
     def check_table_exist(self, table_name=None):
         if table_name is None:
@@ -133,15 +135,15 @@ class SqlConnection:
         ''' % (table_name, start_time, to_time))
         results = self.cursor.fetchall()
         records = []
-        for result in results:
-            record = {'ts': result[1],
-                      'open': result[2],
-                      'close': result[3],
-                      'high': result[4],
-                      'low': result[5],
-                      'vol': result[6],
-                      'amount': result[7],
-                      'count': result[8]}
+        for r in results:
+            record = {'ts': r[1],
+                      'open': r[2],
+                      'close': r[3],
+                      'high': r[4],
+                      'low': r[5],
+                      'vol': r[6],
+                      'amount': r[7],
+                      'count': r[8]}
             records.append(record)
         return DataFrame(records)
 
@@ -164,10 +166,13 @@ class SqlConnection:
                 print("table_name is wrong")
                 raise RuntimeError
             table_name = self.table_name
-
+        if not values:
+            return
         try:
-            effect_row = self.update_kline(table_name=table_name, values=values)
-            if not effect_row:
+            is_exist = self.record_exist(values['timestamp'])
+            if is_exist:
+                effect_row = self.update_kline(table_name=table_name, values=values)
+            else:
                 effect_row = self.insert_kline(table_name=table_name, values=values)
             self.con.commit()
         except pymysql.Warning as w:
@@ -177,7 +182,7 @@ class SqlConnection:
             print('Error: %s' % str(e))
             self.con.rollback()
         else:
-            return "success"
+            return effect_row
 
     def insert_kline(self, table_name, values):
         self.con.begin()
@@ -224,8 +229,17 @@ class SqlConnection:
         print(self.table_name)
         print(self.password)
 
+    def record_exist(self, timestamp: int):
+        effect_rows = self.cursor.execute('''
+            select * from %s where timestamp = %d
+        ''' % (self.table_name, timestamp))
+        if effect_rows == 0:
+            return False
+        return True
 
-client = SqlConnection()
-cursor = client.get_cursor()
-result = client.get_time_range()
-print(result)
+# client = SqlConnection()
+# cursor = client.get_cursor()
+# result = client.get_time_range()
+# isexist = client.record_exist(timestamp=1566136801)
+# print(isexist)
+

@@ -2,6 +2,8 @@ import websocket
 import time
 import logging.config
 import yaml
+import glob
+import configparser
 from huobi.sql_connection import SqlConnection
 from huobi.MessageFormat import Message
 
@@ -9,7 +11,7 @@ from huobi.MessageFormat import Message
 class FetchClient:
 
     def __init__(self, instance_id='',
-                 url: str="",
+                 exchange: str='',
                  symbol: str='btcusdt',
                  period: int=30,
                  size: int=240
@@ -20,7 +22,10 @@ class FetchClient:
         records_time = self.sql_client.get_time_range()
         records_begin = records_time.begin
         records_end = records_time.end
-
+        __iniFilePath = glob.glob('../config/exchanges_config.ini')
+        cfg = configparser.ConfigParser()
+        cfg.read(__iniFilePath, encoding='utf-8')
+        self.url = cfg.get(exchange, 'url')
         if records_begin is None:
             self.start_time = 1501174800
         else:
@@ -28,7 +33,6 @@ class FetchClient:
         self.to_time = int(time.time())
         self.req_ws = None
         self.func = None
-        self.url = url
         self.symbol = symbol
         self.period = period
         self.instance_id = instance_id
