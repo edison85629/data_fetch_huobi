@@ -57,7 +57,7 @@ class FetchClient:
     # 接收消息
     def on_message(self, ws, message):
         self.req_ws = ws
-        msg = Message(logger = self.logger)
+        msg = Message(logger=self.logger)
         # 初始化传入的sub 获取 req函数
         if self.func == 'req':
             if self.fetch_count < len(self.records_indexes):
@@ -74,7 +74,7 @@ class FetchClient:
                     data = msg.get_req_msg()
 
                     if data:
-                        self.logger.info(data)  # logger测试
+                        # self.logger.info(data)  # logger测试
                         if data[0] == self.fetch_count:
                             self.fetch_count += 1
                             self.req_count = 0
@@ -94,7 +94,6 @@ class FetchClient:
                 else:
                     msg.sub_padding(ws, message, data='', totalcount=1)
                 values = msg.get_sub_msg()
-                logging.info(values)
                 if values:
                     self.sql_client.update_records(values=values)
         elif self.func == 'sub':

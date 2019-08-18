@@ -3,7 +3,7 @@ from huobi.FetchClient import FetchClient
 
 # 定义url地址
 url = "wss://api.huobi.br.com/ws"
-# 定义操作交易队
+# 定义操作交易对
 symbol = 'btcusdt'
 # 定义周期值 单位为min
 period = 60

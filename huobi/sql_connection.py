@@ -225,3 +225,7 @@ class SqlConnection:
         print(self.password)
 
 
+client = SqlConnection()
+cursor = client.get_cursor()
+result = client.get_time_range()
+print(result)
