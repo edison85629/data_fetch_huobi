@@ -19,25 +19,31 @@ class FetchClient:
 
         self.symbol = symbol
         self.period = period
+        # init logger config
         with open(r'../config/log_config.yaml') as f:
             log_config = yaml.safe_load(f)
             logging.config.dictConfig(log_config)
         self.logger = logging.getLogger('%s' % (self.symbol + '_'+str(self.period)+"min"))
+        # init mysql config
         self.sql_client = SqlConnection(symbol=symbol, period=period, logger=self.logger)
         self.sql_client.create_tables()
         self.sql_client.delete_final_records()
+        # create records_timestamp_list
         records_time = self.sql_client.get_time_range()
         records_begin = records_time.begin
         records_end = records_time.end
+        # init url by exchange's name
         __iniFilePath = glob.glob('../config/exchanges_config.ini')
         cfg = configparser.ConfigParser()
         cfg.read(__iniFilePath, encoding='utf-8')
         self.url = cfg.get(exchange, 'url')
+        # init huobi's records_timestamp at beginning
         if records_begin is None:
             self.start_time = 1501174800
         else:
             self.start_time = records_end+1
         self.to_time = int(time.time())
+
         self.req_ws = None
         self.func = None
         self.instance_id = instance_id
@@ -45,6 +51,7 @@ class FetchClient:
         self.req_count = 0
         self.sub_dict = {}
         self.totaldata = {}
+        # create records_timestamp list
         self.records_indexes = []
         _start = self.to_time - self.time_unit + 1
         _to = self.to_time
@@ -54,6 +61,7 @@ class FetchClient:
             _to = _to - _step
             _start = _start - _step
         print(len(self.records_indexes))
+        # counter
         self.fetch_count = 0
         self.records_index = 0
 
@@ -105,6 +113,7 @@ class FetchClient:
             pass  # todo
         else:
             pass
+
     # 发生错误
     def on_error(self, ws, error):
         # TODO 填写因发送异常，连接断开的处理操作
